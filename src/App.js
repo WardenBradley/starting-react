@@ -1,5 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
+import styled from "@emotion/styled";
+import Button from '@mui/material/Button';
 
 import "./App.css";
 
@@ -8,7 +10,7 @@ const PokemonRow = ({ pokemon, onSelect }) => (
     <td>{pokemon.name.english}</td>
     <td>{pokemon.type.join(", ")}</td>
     <td>
-      <button onClick={() => onSelect(pokemon)}>Select!</button>
+      <Button variant="contained" onClick={() => onSelect(pokemon)}>Select!</Button>
     </td>
   </tr>
 )
@@ -51,55 +53,94 @@ PokemonInfo.propTypes = {
   }),
 }
 
-function App() {
-  const [filter, filterSet] = React.useState("");
-  const [pokemon, pokemonSet] = React.useState([]);
-  const [selectedItem, selectedItemSet] = React.useState(null);
+const Title = styled.h1`
+  text-align: center;
+`;
 
-  React.useEffect(() => {
+const TwoColumnLayout = styled.div`
+  display: grid;
+  grid-template-columns: 70% 30%; 
+  grid-column-gap: 1rem;
+`;
+
+const Container = styled.div`
+  margin: auto;
+  width: 800px;
+  paddingTop: 1rem;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  font-size: x-large;
+  padding: 0.2rem;
+`;
+
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      filter: "",
+      pokemon: [],
+      selectedItem: null,
+    }
+  }
+
+  componentDidMount() {
     fetch("http://localhost:3000/starting-react/pokemon.json")
-      .then((resp) => resp.json())
-      .then((data) => pokemonSet(data))
-  }, []);
+    .then((resp) => resp.json())
+    .then((pokemon) => 
+      this.setState({
+        ...this.state,
+        pokemon,
+      })
+    );
+  }
 
-  return (
-    <div
-      style={{
-        margin: "auto",
-        width: 800,
-        paddingTop: "1rem",
-      }}
-    >
-      <h1 className="title">Pokemon Search</h1>
-      <input value={filter} onChange={(evt) => filterSet(evt.target.value)}/>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "70% 30%",
-          gridColumnGap: "1rem",
-        }}
-      >
-        <div>
-          <table width="100%">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pokemon
-              .filter((pokemon) => pokemon.name.english.toLowerCase().includes(filter.toLowerCase()))
-              .slice(0, 20).map((pokemon) => (
-                <PokemonRow pokemon={pokemon} key={pokemon.id} onSelect={(pokemon) => selectedItemSet(pokemon)}/>
-              ))}
-            </tbody>
-          </table>
-        </div>
-       {selectedItem && <PokemonInfo {...selectedItem} />}
-      </div>
-    </div>
-  );
+  render() {
+    return (
+      <Container>
+        <Title>Pokemon Search</Title>
+        <TwoColumnLayout>
+          <div>
+            <Input 
+            value={this.state.filter} 
+            onChange={(evt) => this.setState({
+              ...this.state,
+              filter: evt.target.value
+            })}
+            />
+            <table width="100%">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {this.state.pokemon
+                .filter((pokemon) => 
+                  pokemon.name.english
+                    .toLowerCase()
+                    .includes(this.state.filter.toLowerCase())
+                    )
+                .slice(0, 20).map((pokemon) => (
+                  <PokemonRow 
+                    pokemon={pokemon} 
+                    key={pokemon.id} 
+                    onSelect={(pokemon) => this.setState({
+                      ...this.state,
+                      selectedItem: pokemon
+                      })}
+                      />
+                ))}
+              </tbody>
+            </table>
+          </div>
+         {this.state.selectedItem && <PokemonInfo {...this.state.selectedItem} />}
+        </TwoColumnLayout>
+      </Container>
+    );
+  }
 }
 
 export default App;
